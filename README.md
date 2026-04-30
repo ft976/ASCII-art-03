@@ -9,7 +9,7 @@
 
 **ASCII Canvas** is a high-fidelity, browser-native atelier designed for digital artists to sculpt light, shadow, and code into mesmerizing ASCII art. This project represents a fusion of vintage aesthetics and modern, ultra-high-performance processing.
 
-Developed and maintained exclusively by **Rehan97**.
+Developed and maintained exclusively by [**Rehan97**](https://www.linkedin.com/in/rehan-ahmad-863386382?utm_source=share_via&utm_content=profile&utm_medium=member_android).
 
 ---
 
@@ -112,7 +112,7 @@ We avoided standard "dashboard" look-and-feel. Instead, we built an **Atelier**:
 
 ASCII Canvas is a collaborative masterpiece built with passion by:
 
-- **Rehan97** - Creator
+- [**Rehan97**](https://www.linkedin.com/in/rehan-ahmad-863386382?utm_source=share_via&utm_content=profile&utm_medium=member_android) - Creator
 
 ---
 

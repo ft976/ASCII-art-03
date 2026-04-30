@@ -674,7 +674,7 @@ export default function App() {
 
         <footer className="pt-12 pb-6 flex justify-center border-t border-neutral-900">
           <p className="text-neutral-500 text-sm font-mono">
-            Crafted with passion by <span className="text-neutral-300">Rehan97</span>
+            Crafted with passion by <a href="https://www.linkedin.com/in/rehan-ahmad-863386382?utm_source=share_via&utm_content=profile&utm_medium=member_android" target="_blank" rel="noreferrer" className="text-neutral-300 hover:text-white transition-colors underline decoration-neutral-700">Rehan97</a>
           </p>
         </footer>
       </div>

@@ -23,6 +23,10 @@ export default function App() {
   const cols = 150; // Locked resolution
   const [bgCode, setBgCode] = useState<'black' | 'white'>('black');
   const [isColor, setIsColor] = useState<boolean>(false);
+  const [outlineWidth, setOutlineWidth] = useState<number>(0);
+  const [isHollow, setIsHollow] = useState<boolean>(false);
+  const [contrast, setContrast] = useState<number>(1.2);
+  const [brightness, setBrightness] = useState<number>(1.0);
   const [isProcessing, setIsProcessing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +64,7 @@ export default function App() {
            processFrame(true);
        }
     }
-  }, [mediaSrc, mediaType, mode, bgCode, isColor]);
+  }, [mediaSrc, mediaType, mode, bgCode, isColor, outlineWidth, isHollow, contrast, brightness]);
 
   const togglePlay = () => {
       if (!videoRef.current || mediaType !== 'video') return;
@@ -177,11 +181,21 @@ export default function App() {
         const g = gSum / count;
         const b = bSum / count;
         
-        // Luminosity method standard (Grayscale conversion)
-        const gray = 0.2989 * r + 0.5870 * g + 0.1140 * b;
+        // Perceptual luminance (Rec. 709) for more accurate human-eye representation
+        const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        
+        // Apply brightness and contrast
+        const adjustedGray = Math.max(0, Math.min(255, ((gray * brightness) - 128) * contrast + 128));
         
         // Match the python character selection
-        const charIdx = Math.min(Math.floor((gray * numChars) / 255), numChars - 1);
+        let charIdx = Math.min(Math.floor((adjustedGray * numChars) / 255), numChars - 1);
+        
+        // IMPORTANT: When background is black, drawing heavy characters for dark regions emulates light.
+        // We must invert the mapping so dark image regions map to empty spaces (which are dark on a black bg).
+        if (bgCode === 'black') {
+            charIdx = numChars - 1 - charIdx;
+        }
+        
         const char = charList[charIdx];
         const color = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
         
@@ -234,17 +248,26 @@ export default function App() {
     resCtx.textBaseline = 'top';
     // Match a monospace font
     resCtx.font = '12px "Courier New", Courier, monospace';
+    resCtx.lineJoin = 'round'; // Softer outline strokes
 
     for (let MathI = 0; MathI < numRows; MathI++) {
         for (let MathJ = 0; MathJ < numCols; MathJ++) {
             const block = colorBlocks[MathI][MathJ];
+            const x = MathJ * charWidth;
+            const y = MathI * charHeight;
             
-            if (isColor) {
-               resCtx.fillStyle = block.color;
-            } else {
-               resCtx.fillStyle = bgCode === 'white' ? '#000000' : '#ffffff';
+            const textColor = isColor ? block.color : (bgCode === 'white' ? '#000000' : '#ffffff');
+            
+            if (outlineWidth > 0) {
+                resCtx.lineWidth = outlineWidth;
+                resCtx.strokeStyle = textColor;
+                resCtx.strokeText(block.char, x, y);
             }
-            resCtx.fillText(block.char, MathJ * charWidth, MathI * charHeight);
+            
+            if (!isHollow || outlineWidth === 0) {
+                resCtx.fillStyle = textColor;
+                resCtx.fillText(block.char, x, y);
+            }
         }
     }
 
@@ -344,6 +367,15 @@ export default function App() {
       // Export colored version as HTML so the visual output perfectly matches the app's browser view
       ext = 'html';
       mime = 'text/html';
+      
+      let strokeStyle = '';
+      if (outlineWidth > 0) {
+          strokeStyle = `
+    -webkit-text-stroke-width: ${outlineWidth}px;
+    -webkit-text-stroke-color: currentColor;
+    ${isHollow ? '-webkit-text-fill-color: transparent;' : ''}`;
+      }
+      
       content = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -365,6 +397,7 @@ export default function App() {
     line-height: 10px;
     margin: 0;
     padding: 20px;
+    ${strokeStyle}
   }
 </style>
 </head>
@@ -510,12 +543,56 @@ export default function App() {
                     </Select>
                 </div>
 
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center justify-between pt-2 pb-2">
                     <div className="space-y-0.5">
                         <Label>Colored Text</Label>
                         <p className="text-xs text-neutral-400">Match original image colors</p>
                     </div>
                     <Switch checked={isColor} onCheckedChange={setIsColor} />
+                </div>
+                
+                <div className="space-y-3 pt-4 border-t border-neutral-800">
+                    <div className="flex justify-between">
+                        <Label>Brightness</Label>
+                        <span className="text-xs text-neutral-400 font-mono">{brightness}x</span>
+                    </div>
+                    <Slider
+                        value={[brightness]}
+                        onValueChange={(val: any) => setBrightness(Array.isArray(val) ? val[0] : val)}
+                        min={0.5} max={2.0} step={0.1}
+                        className="[&>span:first-child]:bg-neutral-800"
+                    />
+
+                    <div className="flex justify-between pt-2">
+                        <Label>Contrast</Label>
+                        <span className="text-xs text-neutral-400 font-mono">{contrast}x</span>
+                    </div>
+                    <Slider
+                        value={[contrast]}
+                        onValueChange={(val: any) => setContrast(Array.isArray(val) ? val[0] : val)}
+                        min={0.5} max={3.0} step={0.1}
+                        className="[&>span:first-child]:bg-neutral-800"
+                    />
+                </div>
+
+                <div className="space-y-3 pb-2">
+                    <div className="flex justify-between">
+                        <Label>Outline Weight</Label>
+                        <span className="text-xs text-neutral-400 font-mono">{outlineWidth}px</span>
+                    </div>
+                    <Slider
+                        value={[outlineWidth]}
+                        onValueChange={(val: any) => setOutlineWidth(Array.isArray(val) ? val[0] : val)}
+                        min={0} max={2.0} step={0.2}
+                        className="[&>span:first-child]:bg-neutral-800"
+                    />
+                    <div className="flex items-center justify-between pt-1">
+                        <div className="space-y-0.5">
+                            <Label>Hollow Text</Label>
+                            <p className="text-xs text-neutral-400">Only draw outlines</p>
+                        </div>
+                        <Switch checked={isHollow} onCheckedChange={setIsHollow} disabled={outlineWidth === 0} />
+                    </div>
                 </div>
               </CardContent>
             </Card>
@@ -579,9 +656,12 @@ export default function App() {
                         <TabsContent value="text" className="m-0 h-[600px] w-full data-[state=active]:block overflow-auto p-4 custom-scrollbar">
                            <pre 
                                ref={textPreRef}
-                               className="font-mono text-[8px] leading-[8px] sm:text-[10px] sm:leading-[10px] m-0 p-0"
+                               className="font-mono text-[8px] leading-[8px] sm:text-[10px] sm:leading-[10px] m-0 p-0 transition-opacity"
                                style={{
-                                   color: bgCode === 'white' ? '#000' : '#fff'
+                                   color: bgCode === 'white' ? '#000' : '#fff',
+                                   WebkitTextStrokeWidth: outlineWidth > 0 ? `${outlineWidth}px` : undefined,
+                                   WebkitTextStrokeColor: outlineWidth > 0 ? (isColor ? undefined : 'currentcolor') : undefined,
+                                   WebkitTextFillColor: isHollow && outlineWidth > 0 ? 'transparent' : undefined,
                                }}
                            />
                         </TabsContent>

@@ -380,7 +380,7 @@ export default function App() {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Colored ASCII Art</title>
+<title>ASCII Canvas Export</title>
 <style>
   body {
     background-color: ${bgCode === 'white' ? '#ffffff' : '#000000'};

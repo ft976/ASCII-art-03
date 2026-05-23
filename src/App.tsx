@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import AppLogo from '@/assets/images/pixel_art_canvas_logo_1779526984383.png';
 
 const CHAR_LIST_SIMPLE = '@%#*+=-:. ';
 const CHAR_LIST_COMPLEX = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
@@ -422,7 +423,7 @@ export default function App() {
         
         <header className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
-            <Type className="w-8 h-8 text-neutral-400" />
+            <img src={AppLogo} alt="ASCII Canvas Logo" className="w-12 h-12 rounded-lg shadow-md border border-neutral-800 object-cover" referrerPolicy="no-referrer" />
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-white">
               ASCII Canvas
             </h1>
